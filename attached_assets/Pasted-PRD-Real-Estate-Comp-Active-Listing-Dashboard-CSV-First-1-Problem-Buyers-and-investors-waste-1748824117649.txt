@@ -1,0 +1,131 @@
+PRD ­– Real-Estate Comp & Active-Listing Dashboard (CSV-First)
+1. Problem
+Buyers and investors waste hours scraping MLS exports into spreadsheets, then manually slicing the data to spot value or market trends. They need an instant, visual, drill-down view of comps and active listings without writing formulas.
+
+2. Goal
+Ship a web app that turns any standard CSV export (sold comps or active listings) into an interactive, filter-rich dashboard plus an AI layer that answers natural-language questions about the data.
+
+3. Users
+Investor / Flipper – cares about spread, days on market, flip ROI
+
+Buy-and-hold Landlord – focused on rent, cap rate, long-term trend
+
+Primary-home Buyer – wants like-for-like comps, school scores, price trajectory
+
+Agent / Broker – needs quick, shareable market snapshots for clients
+
+4. Core KPIs to Display (MVP)
+Median and average sale price
+
+Median and average list price
+
+Sale-to-list ratio
+
+Price per square foot (list and sold)
+
+Days on market (median, average, distribution)
+
+Closed sales count, new listings count
+
+Months of inventory, absorption rate
+
+Price change frequency and median reduction
+
+Bed/bath distribution, living sqft, lot size
+
+Cash vs financed share
+
+Rental metrics: estimated rent, GRM, cap rate (use external rent API)
+
+5. Functional Requirements
+#	Must Have	Acceptance Test
+F-1	CSV Upload – drag-and-drop or file selector. Support at least 2 MB, 10k rows.	File parses without error and shows row count.
+F-2	Schema Detection – auto-map common headers (Price, Beds, Sold Date, etc.). Provide manual override UI.	At least 90 % of sample file columns correctly mapped on first pass.
+F-3	Data Clean & Normalize – strip currency symbols, handle missing sqft, coerce dates to ISO.	Data types shown correctly in preview grid.
+F-4	KPI Engine – compute KPIs listed in section 4 in < 2 s for 10k rows.	KPI widgets render values matching hand-checked spreadsheet.
+F-5	Interactive Filters – time range, geography (zip, city), price band, beds, baths, property type. Cascading and multi-select.	Changing a filter updates all charts in < 250 ms.
+F-6	Visuals – price trend line, price-per-sqft heatmap, DOM histogram, inventory gauge. Use Plotly or ECharts.	Charts render responsively on desktop and mobile.
+F-7	Property Drill-Down – click any datapoint to open a table of matching listings with photos and key fields.	User can export the filtered table to CSV.
+F-8	AI Q&A (v1) – chat box where user asks, e.g., “What’s the median price for 3-bed homes in 83455 last quarter?” and gets an answer plus chart snapshot.	95 % of test queries return correct numeric answer.
+
+6. Non-Functional Requirements
+Performance – dashboard initial render < 3 s on 10k-row file.
+
+Security – files processed in browser (no upload) for MVP.
+
+Scalability – design service layer to swap in database when we accept > 50 k rows.
+
+Browser Support – last 2 versions of Chrome, Edge, Safari.
+
+No external data stored – comply with user privacy until accounts feature added.
+
+7. Data Pipeline (CSV-only MVP)
+Client-side Papaparse → JSON
+
+Column-mapping heuristic + manual override
+
+Compute KPIs in Web Worker (avoid UI jank)
+
+Render React + Plotly dashboard
+
+Embed DuckDB-wasm later for larger files
+
+8. AI Layer
+Query parser: OpenAI function-calling model with JSON schema for filter parameters
+
+Execution: Feed parsed filters to same KPI engine, return JSON → natural-language summary
+
+Guardrails: Reject requests not supported by data schema
+
+9. Stretch Goals (post-MVP)
+Merge multiple CSVs (sold + active)
+
+Cloud upload with S3 presigned URLs
+
+User accounts and saved dashboards
+
+Forecast widget (LightGBM on price trend)
+
+Map view with Leaflet heat layers
+
+Zapier webhook to auto-pull new MLS exports
+
+10. Tech Stack
+React + Vite
+
+Plotly.js for charts
+
+TanStack Table for grids
+
+Papaparse for CSV
+
+OpenAI GPT-4o via serverless edge function
+
+Optional: DuckDB-wasm for big files
+
+11. Milestones & Timing
+Week	Deliverable
+1	File upload, schema detection UI
+2	KPI engine + preview grid
+3	Core charts and filter panel
+4	Property drill-down and export
+5	AI Q&A prototype
+6	Polish, responsiveness, test suite
+
+12. Success Metrics
+< 5 min from file upload to insight for first-time user
+
+95 % KPI accuracy vs spreadsheet benchmark
+
+AI answers NPS ≥ 8 from pilot users
+
+Time on dashboard per session ≥ 4 minutes
+
+13. Open Questions
+Which rent API do we license for cap-rate calc?
+
+Do we standardize on Zillow or FIPS geo codes for location filter?
+
+How do we handle photo URLs that require MLS auth?
+
+Deliver this spec to engineering and design. First demo expected end of week 3.
