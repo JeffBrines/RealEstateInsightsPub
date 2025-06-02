@@ -72,6 +72,7 @@ export type KPIData = z.infer<typeof kpiSchema>;
 // AI query schema
 export const aiQuerySchema = z.object({
   query: z.string(),
+  data: z.array(propertySchema),
   filters: filterSchema.optional(),
 });
 

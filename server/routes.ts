@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
-import { aiQuerySchema, aiResponseSchema } from "@shared/schema";
+import { aiQuerySchema, aiResponseSchema, Property } from "@shared/schema";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || "sk-demo-key"
@@ -25,21 +25,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare data summary for AI context
       const dataSummary = {
         totalProperties: data.length,
-        averagePrice: data.reduce((sum, p) => sum + p.price, 0) / data.length,
+        averagePrice: data.reduce((sum: number, p: Property) => sum + p.price, 0) / data.length,
         priceRange: {
-          min: Math.min(...data.map(p => p.price)),
-          max: Math.max(...data.map(p => p.price))
+          min: Math.min(...data.map((p: Property) => p.price)),
+          max: Math.max(...data.map((p: Property) => p.price))
         },
-        statusDistribution: data.reduce((acc, p) => {
+        statusDistribution: data.reduce((acc: Record<string, number>, p: Property) => {
           acc[p.status] = (acc[p.status] || 0) + 1;
           return acc;
         }, {} as Record<string, number>),
-        bedroomDistribution: data.reduce((acc, p) => {
+        bedroomDistribution: data.reduce((acc: Record<number, number>, p: Property) => {
           acc[p.beds] = (acc[p.beds] || 0) + 1;
           return acc;
         }, {} as Record<number, number>),
-        cities: [...new Set(data.map(p => p.city))],
-        propertyTypes: [...new Set(data.map(p => p.propertyType))]
+        cities: Array.from(new Set(data.map((p: Property) => p.city))),
+        propertyTypes: Array.from(new Set(data.map((p: Property) => p.propertyType)))
       };
 
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

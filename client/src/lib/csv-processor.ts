@@ -117,47 +117,63 @@ export function transformRow(row: any, mapping: ColumnMapping): Property | null 
 
 export function processCSV(file: File): Promise<ProcessedCSV> {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (result) => {
-        try {
-          const headers = Object.keys(result.data[0] || {});
-          const columnMapping = detectColumnMapping(headers);
-          const errors: string[] = [];
-          
-          // Validate that we have minimum required columns
-          if (!columnMapping.address || !columnMapping.price || !columnMapping.beds || !columnMapping.baths) {
-            errors.push('Missing required columns. Please ensure your CSV has Address, Price, Beds, and Baths columns.');
-          }
-          
-          const transformedData: Property[] = [];
-          
-          result.data.forEach((row: any, index: number) => {
-            const property = transformRow(row, columnMapping);
-            if (property) {
-              transformedData.push(property);
-            } else if (index < 10) { // Only report errors for first 10 rows to avoid spam
-              errors.push(`Row ${index + 1}: Missing required data`);
+    // Try to read the file with different encodings
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header: string) => {
+          // Clean up header names and handle encoding issues
+          return header.trim().replace(/[^\x20-\x7E]/g, '').replace(/["']/g, '');
+        },
+        complete: (result) => {
+          try {
+            const headers = Object.keys(result.data[0] || {});
+            const columnMapping = detectColumnMapping(headers);
+            const errors: string[] = [];
+            
+            // Validate that we have minimum required columns
+            if (!columnMapping.address || !columnMapping.price || !columnMapping.beds || !columnMapping.baths) {
+              errors.push('Missing required columns. Please ensure your CSV has Address, Price, Beds, and Baths columns.');
             }
-          });
-          
-          if (transformedData.length === 0) {
-            errors.push('No valid property records found in the CSV file.');
+            
+            const transformedData: Property[] = [];
+            
+            result.data.forEach((row: any, index: number) => {
+              const property = transformRow(row, columnMapping);
+              if (property) {
+                transformedData.push(property);
+              } else if (index < 10) { // Only report errors for first 10 rows to avoid spam
+                errors.push(`Row ${index + 1}: Missing required data`);
+              }
+            });
+            
+            if (transformedData.length === 0) {
+              errors.push('No valid property records found in the CSV file.');
+            }
+            
+            resolve({
+              data: transformedData,
+              columnMapping,
+              errors
+            });
+          } catch (error) {
+            reject(new Error(`Failed to process CSV: ${error instanceof Error ? error.message : 'Unknown error'}`));
           }
-          
-          resolve({
-            data: transformedData,
-            columnMapping,
-            errors
-          });
-        } catch (error) {
-          reject(new Error(`Failed to process CSV: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        },
+        error: (error) => {
+          reject(new Error(`Failed to parse CSV: ${error.message}`));
         }
-      },
-      error: (error) => {
-        reject(new Error(`Failed to parse CSV: ${error.message}`));
-      }
-    });
+      });
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file. Please try a different encoding or save your CSV as UTF-8.'));
+    };
+    
+    // Try reading as UTF-8 first, then fallback to other encodings
+    reader.readAsText(file, 'UTF-8');
   });
 }
