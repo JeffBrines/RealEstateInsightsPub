@@ -117,16 +117,17 @@ export function transformRow(row: any, mapping: ColumnMapping): Property | null 
 
 export function processCSV(file: File): Promise<ProcessedCSV> {
   return new Promise((resolve, reject) => {
-    // Try to read the file with different encodings
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
+    // Try multiple encoding strategies
+    const tryParsing = (text: string) => {
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header: string) => {
           // Clean up header names and handle encoding issues
-          return header.trim().replace(/[^\x20-\x7E]/g, '').replace(/["']/g, '');
+          return header.trim()
+            .replace(/[^\x20-\x7E]/g, '') // Remove non-ASCII chars
+            .replace(/["']/g, '') // Remove quotes
+            .replace(/\s+/g, ' '); // Normalize spaces
         },
         complete: (result) => {
           try {
@@ -163,17 +164,34 @@ export function processCSV(file: File): Promise<ProcessedCSV> {
             reject(new Error(`Failed to process CSV: ${error instanceof Error ? error.message : 'Unknown error'}`));
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           reject(new Error(`Failed to parse CSV: ${error.message}`));
         }
       });
     };
+
+    // Try multiple reading strategies for different encodings
+    const reader = new FileReader();
     
-    reader.onerror = () => {
-      reject(new Error('Failed to read file. Please try a different encoding or save your CSV as UTF-8.'));
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      tryParsing(text);
     };
     
-    // Try reading as UTF-8 first, then fallback to other encodings
+    reader.onerror = () => {
+      // If UTF-8 fails, try with latin1
+      const reader2 = new FileReader();
+      reader2.onload = (e) => {
+        const text = e.target?.result as string;
+        tryParsing(text);
+      };
+      reader2.onerror = () => {
+        reject(new Error('Failed to read file. Please save your CSV as UTF-8 and try again.'));
+      };
+      reader2.readAsText(file, 'ISO-8859-1');
+    };
+    
+    // Start with UTF-8
     reader.readAsText(file, 'UTF-8');
   });
 }
