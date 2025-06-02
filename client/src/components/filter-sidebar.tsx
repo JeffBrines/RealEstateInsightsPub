@@ -207,16 +207,16 @@ export default function FilterSidebar({
               <div>
                 <Label className="text-xs">Beds</Label>
                 <Select
-                  value={filters.beds?.toString() || ""}
+                  value={filters.beds?.toString() || "any"}
                   onValueChange={(value) => onFiltersChange({
-                    beds: value ? parseInt(value) : undefined
+                    beds: value === "any" ? undefined : parseInt(value)
                   })}
                 >
                   <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="1">1+</SelectItem>
                     <SelectItem value="2">2+</SelectItem>
                     <SelectItem value="3">3+</SelectItem>
@@ -228,16 +228,16 @@ export default function FilterSidebar({
               <div>
                 <Label className="text-xs">Baths</Label>
                 <Select
-                  value={filters.baths?.toString() || ""}
+                  value={filters.baths?.toString() || "any"}
                   onValueChange={(value) => onFiltersChange({
-                    baths: value ? parseInt(value) : undefined
+                    baths: value === "any" ? undefined : parseInt(value)
                   })}
                 >
                   <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="1">1+</SelectItem>
                     <SelectItem value="2">2+</SelectItem>
                     <SelectItem value="3">3+</SelectItem>
