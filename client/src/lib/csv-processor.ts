@@ -12,20 +12,20 @@ const COLUMN_PATTERNS = {
   address: /^(address|addr|street|property_address|full_address|location|property_location)$/i,
   city: /^(city|municipality|town)$/i,
   state: /^(state|st|province)$/i,
-  zipCode: /^(zip|zipcode|zip_code|postal|postal_code)$/i,
-  price: /^(price|list_price|asking_price|current_price|sale_price|sold_price|listing_price)$/i,
-  listPrice: /^(list_price|listing_price|asking_price|original_price)$/i,
-  salePrice: /^(sale_price|sold_price|final_price|closing_price)$/i,
-  beds: /^(beds|bedrooms|bed|br|bedroom)$/i,
-  baths: /^(baths|bathrooms|bath|ba|full_baths|bathroom)$/i,
-  sqft: /^(sqft|sq_ft|square_feet|living_area|floor_area|size|sq\.ft|living_sqft)$/i,
-  lotSize: /^(lot_size|lot_sqft|lot_area|land_area|lot)$/i,
-  yearBuilt: /^(year_built|year|built|construction_year|yr_built)$/i,
-  propertyType: /^(property_type|type|style|home_type|prop_type)$/i,
+  zipCode: /^(zip|zipcode|zip_code|postal|postal_code|zip code)$/i,
+  price: /^(price|list_price|asking_price|current_price|sale_price|sold_price|listing_price|sold price|listing price|orig\. list price)$/i,
+  listPrice: /^(list_price|listing_price|asking_price|original_price|orig\. list price|listing price)$/i,
+  salePrice: /^(sale_price|sold_price|final_price|closing_price|sold price)$/i,
+  beds: /^(beds|bedrooms|bed|br|bedroom|total bedrooms|overall bedrooms)$/i,
+  baths: /^(baths|bathrooms|bath|ba|full_baths|bathroom|total baths|overall total baths)$/i,
+  sqft: /^(sqft|sq_ft|square_feet|living_area|floor_area|size|sq\.ft|living_sqft|main house sqft|total sqft)$/i,
+  lotSize: /^(lot_size|lot_sqft|lot_area|land_area|lot|lot size|acres)$/i,
+  yearBuilt: /^(year_built|year|built|construction_year|yr_built|year built)$/i,
+  propertyType: /^(property_type|type|style|home_type|prop_type|property type|house style|realtor\.com type)$/i,
   status: /^(status|listing_status|mls_status|property_status)$/i,
-  daysOnMarket: /^(days_on_market|dom|market_days|days_market)$/i,
-  listDate: /^(list_date|listing_date|date_listed|listed_date)$/i,
-  saleDate: /^(sale_date|sold_date|closing_date|date_sold|close_date)$/i,
+  daysOnMarket: /^(days_on_market|dom|market_days|days_market|days on market)$/i,
+  listDate: /^(list_date|listing_date|date_listed|listed_date|effective date)$/i,
+  saleDate: /^(sale_date|sold_date|closing_date|date_sold|close_date|sold date)$/i,
   hoaFees: /^(hoa|hoa_fee|hoa_fees|association_fee|hoa_monthly)$/i,
 };
 
@@ -71,18 +71,24 @@ export function cleanValue(value: string, type: 'number' | 'string' | 'date'): a
 
 export function transformRow(row: any, mapping: ColumnMapping): Property | null {
   try {
-    // Required fields
-    const address = row[mapping.address || ''];
-    const city = row[mapping.city || ''];
-    const price = cleanValue(row[mapping.price || ''], 'number');
-    const beds = cleanValue(row[mapping.beds || ''], 'number');
-    const baths = cleanValue(row[mapping.baths || ''], 'number');
-    const sqft = cleanValue(row[mapping.sqft || ''], 'number');
-    const propertyType = cleanValue(row[mapping.propertyType || ''], 'string');
-    const status = cleanValue(row[mapping.status || ''], 'string');
+    // Extract basic data with fallbacks
+    const address = row[mapping.address || ''] || row[mapping.city || ''] || 'Unknown Address';
+    const city = row[mapping.city || ''] || 'Unknown City';
     
-    // Skip rows missing critical data
-    if (!address || !city || !price || !beds || !baths || !sqft) {
+    // Price fields - use any available price
+    let price = cleanValue(row[mapping.price || ''], 'number') ||
+                cleanValue(row[mapping.salePrice || ''], 'number') ||
+                cleanValue(row[mapping.listPrice || ''], 'number');
+    
+    // Basic property details with defaults
+    const beds = cleanValue(row[mapping.beds || ''], 'number') || 0;
+    const baths = cleanValue(row[mapping.baths || ''], 'number') || 0;
+    const sqft = cleanValue(row[mapping.sqft || ''], 'number') || 1000; // Default to avoid division by zero
+    const propertyType = cleanValue(row[mapping.propertyType || ''], 'string') || 'Single Family';
+    const status = cleanValue(row[mapping.status || ''], 'string') || 'Unknown';
+    
+    // Skip rows without any price data
+    if (!price || price <= 0) {
       return null;
     }
     
@@ -136,9 +142,19 @@ export function processCSV(file: File): Promise<ProcessedCSV> {
           
           const errors: string[] = [];
           
-          // More flexible validation - only require basic columns
-          if (!columnMapping.address && !columnMapping.price) {
-            errors.push('Could not detect Address or Price columns. Please check your CSV format.');
+          // Check if we have minimum required data for real estate analysis
+          const hasAddress = columnMapping.address || columnMapping.city;
+          const hasPrice = columnMapping.price || columnMapping.listPrice || columnMapping.salePrice;
+          const hasSize = columnMapping.sqft || columnMapping.lotSize;
+          
+          if (!hasAddress) {
+            errors.push('Could not detect address or location columns.');
+          }
+          if (!hasPrice) {
+            errors.push('Could not detect price columns (list price, sale price, etc.).');
+          }
+          if (!hasSize) {
+            errors.push('Could not detect size information (square feet, lot size, etc.).');
           }
           
           const transformedData: Property[] = [];
