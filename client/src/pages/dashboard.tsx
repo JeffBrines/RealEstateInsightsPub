@@ -9,6 +9,8 @@ import ChartsGrid from "@/components/charts-grid";
 import PropertyTable from "@/components/property-table";
 import AIChat from "@/components/ai-chat";
 import PropertyDetailModal from "@/components/property-detail-modal";
+import MarketInsights from "@/components/market-insights";
+import ComparableAnalysis from "@/components/comparable-analysis";
 import { useCSVData } from "@/hooks/use-csv-data";
 import { useFilters } from "@/hooks/use-filters";
 import { Property } from "@shared/schema";
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const { filters, updateFilters, resetFilters, filteredData } = useFilters(data || []);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'comparables'>('overview');
 
   const handlePropertySelect = (property: Property) => {
     setSelectedProperty(property);
@@ -76,6 +79,29 @@ export default function Dashboard() {
               <Badge variant="secondary" className="bg-green-500 text-white">
                 {rowCount?.toLocaleString()} properties
               </Badge>
+              <div className="flex space-x-1">
+                <Button 
+                  variant={activeTab === 'overview' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setActiveTab('overview')}
+                >
+                  Overview
+                </Button>
+                <Button 
+                  variant={activeTab === 'insights' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setActiveTab('insights')}
+                >
+                  Market Insights
+                </Button>
+                <Button 
+                  variant={activeTab === 'comparables' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setActiveTab('comparables')}
+                >
+                  CMA Tool
+                </Button>
+              </div>
               <Button variant="ghost" size="sm" onClick={resetData}>
                 <Settings className="h-4 w-4" />
               </Button>
@@ -97,17 +123,29 @@ export default function Dashboard() {
         <main className="flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              {/* KPI Cards */}
-              <KPICards data={filteredData} />
+              {activeTab === 'overview' && (
+                <>
+                  {/* KPI Cards */}
+                  <KPICards data={filteredData} />
 
-              {/* Charts */}
-              <ChartsGrid data={filteredData} />
+                  {/* Charts */}
+                  <ChartsGrid data={filteredData} />
 
-              {/* Property Table */}
-              <PropertyTable
-                data={filteredData}
-                onPropertySelect={handlePropertySelect}
-              />
+                  {/* Property Table */}
+                  <PropertyTable
+                    data={filteredData}
+                    onPropertySelect={handlePropertySelect}
+                  />
+                </>
+              )}
+
+              {activeTab === 'insights' && (
+                <MarketInsights data={filteredData} />
+              )}
+
+              {activeTab === 'comparables' && (
+                <ComparableAnalysis data={data || []} />
+              )}
             </div>
           </div>
         </main>
