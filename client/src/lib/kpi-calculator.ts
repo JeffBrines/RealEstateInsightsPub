@@ -45,6 +45,10 @@ export function calculateKPIs(properties: Property[]): KPIData {
   console.log('Total properties:', properties.length);
   console.log('Sold properties:', soldProperties.length);
   console.log('Sample sold property:', soldProperties[0]);
+  
+  // Check what status values we actually have
+  const statusValues = Array.from(new Set(properties.map(p => p.status)));
+  console.log('Unique status values:', statusValues);
 
   // Price calculations - use actual sold prices for sold properties
   const prices = properties.map(p => p.price).filter(p => p > 0);
