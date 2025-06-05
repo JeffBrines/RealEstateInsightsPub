@@ -32,7 +32,7 @@ export default function ComparableAnalysis({ data }: ComparableAnalysisProps) {
     const sqftRange = targetSqft * 0.2; // 20% range
 
     return data
-      .filter(p => p.status === 'Sold' && p.saleDate)
+      .filter(p => (p.status === 'Sold' || p.status === 'C' || p.status === 'Closed' || p.status === 'SOLD') && p.saleDate)
       .filter(p => {
         const sqftMatch = Math.abs(p.sqft - targetSqft) <= sqftRange;
         const bedsMatch = p.beds === targetBeds;

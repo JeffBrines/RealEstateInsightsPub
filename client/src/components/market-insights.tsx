@@ -15,7 +15,9 @@ export default function MarketInsights({ data }: MarketInsightsProps) {
 
   // Calculate market velocity metrics
   const calculateMarketVelocity = () => {
-    const soldProperties = data.filter(p => p.status === 'Sold' && p.daysOnMarket);
+    const soldProperties = data.filter(p => 
+      (p.status === 'Sold' || p.status === 'C' || p.status === 'Closed' || p.status === 'SOLD') && p.daysOnMarket
+    );
     const fastSales = soldProperties.filter(p => p.daysOnMarket! <= 14).length;
     const normalSales = soldProperties.filter(p => p.daysOnMarket! > 14 && p.daysOnMarket! <= 60).length;
     const slowSales = soldProperties.filter(p => p.daysOnMarket! > 60).length;
@@ -55,8 +57,12 @@ export default function MarketInsights({ data }: MarketInsightsProps) {
 
   // Calculate absorption rate and inventory metrics
   const calculateInventoryMetrics = () => {
-    const activeListings = data.filter(p => p.status === 'Active').length;
-    const soldThisQuarter = data.filter(p => p.status === 'Sold').length;
+    const activeListings = data.filter(p => 
+      p.status === 'Active' || p.status === 'A' || p.status === 'ACTIVE'
+    ).length;
+    const soldThisQuarter = data.filter(p => 
+      p.status === 'Sold' || p.status === 'C' || p.status === 'Closed' || p.status === 'SOLD'
+    ).length;
     const monthsOfInventory = soldThisQuarter > 0 ? (activeListings / (soldThisQuarter / 3)) : 0;
 
     return {
@@ -71,7 +77,7 @@ export default function MarketInsights({ data }: MarketInsightsProps) {
   // List-to-sale price analysis
   const analyzeListToSaleRatio = () => {
     const propertiesWithBoth = data.filter(p => 
-      p.listPrice && p.salePrice && p.status === 'Sold'
+      p.listPrice && p.salePrice && (p.status === 'Sold' || p.status === 'C' || p.status === 'Closed' || p.status === 'SOLD')
     );
 
     if (propertiesWithBoth.length === 0) return null;

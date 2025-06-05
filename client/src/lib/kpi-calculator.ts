@@ -37,25 +37,19 @@ export function calculateKPIs(properties: Property[]): KPIData {
   };
 
   // Filter properties for different calculations
-  const soldProperties = properties.filter(p => p.status === 'Sold');
-  const activeProperties = properties.filter(p => p.status === 'Active');
+  // Handle MLS status codes: C = Closed/Sold, A = Active, etc.
+  const soldProperties = properties.filter(p => 
+    p.status === 'Sold' || p.status === 'C' || p.status === 'Closed' || p.status === 'SOLD'
+  );
+  const activeProperties = properties.filter(p => 
+    p.status === 'Active' || p.status === 'A' || p.status === 'ACTIVE'
+  );
   const propertiesWithDOM = properties.filter(p => p.daysOnMarket !== undefined);
-
-  // Debug logging
-  console.log('Total properties:', properties.length);
-  console.log('Sold properties:', soldProperties.length);
-  console.log('Sample sold property:', soldProperties[0]);
-  
-  // Check what status values we actually have
-  const statusValues = Array.from(new Set(properties.map(p => p.status)));
-  console.log('Unique status values:', statusValues);
 
   // Price calculations - use actual sold prices for sold properties
   const prices = properties.map(p => p.price).filter(p => p > 0);
   const salePrices = soldProperties.map(p => p.price).filter(p => p && p > 0); // Use price field which contains sold price for sold properties
   const listPrices = properties.map(p => p.listPrice || p.price).filter(p => p && p > 0);
-
-  console.log('Sale prices array:', salePrices.slice(0, 5)); // Log first 5 sale prices
 
   // Price per sq ft calculations
   const pricePerSqftValues = properties.map(p => p.price / p.sqft);

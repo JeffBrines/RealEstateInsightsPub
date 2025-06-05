@@ -16,7 +16,7 @@ export const propertySchema = z.object({
   lotSize: z.number().optional(),
   yearBuilt: z.number().optional(),
   propertyType: z.string(),
-  status: z.enum(["Active", "Sold", "Pending", "Withdrawn"]),
+  status: z.enum(["Active", "Sold", "Pending", "Withdrawn", "C", "A", "SOLD", "Closed", "ACTIVE"]),
   daysOnMarket: z.number().optional(),
   listDate: z.string().optional(),
   saleDate: z.string().optional(),
