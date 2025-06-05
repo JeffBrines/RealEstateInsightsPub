@@ -11,6 +11,7 @@ import AIChat from "@/components/ai-chat";
 import PropertyDetailModal from "@/components/property-detail-modal";
 import MarketInsights from "@/components/market-insights";
 import ComparableAnalysis from "@/components/comparable-analysis";
+import AIValuationAnalyst from "@/components/ai-valuation-analyst";
 import { useCSVData } from "@/hooks/use-csv-data";
 import { useFilters } from "@/hooks/use-filters";
 import { Property } from "@shared/schema";
@@ -20,7 +21,7 @@ export default function Dashboard() {
   const { filters, updateFilters, resetFilters, filteredData } = useFilters(data || []);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'comparables'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'comparables' | 'ai-analyst'>('overview');
 
   const handlePropertySelect = (property: Property) => {
     setSelectedProperty(property);
@@ -101,6 +102,13 @@ export default function Dashboard() {
                 >
                   CMA Tool
                 </Button>
+                <Button 
+                  variant={activeTab === 'ai-analyst' ? 'default' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setActiveTab('ai-analyst')}
+                >
+                  AI Analyst
+                </Button>
               </div>
               <Button variant="ghost" size="sm" onClick={resetData}>
                 <Settings className="h-4 w-4" />
@@ -145,6 +153,10 @@ export default function Dashboard() {
 
               {activeTab === 'comparables' && (
                 <ComparableAnalysis data={data || []} />
+              )}
+
+              {activeTab === 'ai-analyst' && (
+                <AIValuationAnalyst data={data || []} />
               )}
             </div>
           </div>

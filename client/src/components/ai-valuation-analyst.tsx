@@ -112,19 +112,18 @@ Provide a professional analysis in JSON format with these exact fields:
 }`;
 
       const response = await aiService.queryData(analysisPrompt, data, {
-        priceRange: [0, 10000000],
-        bedroomRange: [0, 10],
-        bathroomRange: [0, 10],
-        sqftRange: [0, 10000],
-        yearBuiltRange: [1900, 2025],
+        priceRange: { min: 0, max: 10000000 },
+        beds: undefined,
+        baths: undefined,
         propertyTypes: [],
-        cities: [],
-        zipCodes: []
+        status: undefined,
+        dateRange: undefined,
+        location: undefined
       });
 
       let aiAnalysis;
       try {
-        aiAnalysis = JSON.parse(response.analysis);
+        aiAnalysis = JSON.parse(response.answer);
       } catch (e) {
         // Fallback if JSON parsing fails
         aiAnalysis = {
