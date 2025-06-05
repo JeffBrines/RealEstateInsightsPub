@@ -16,7 +16,7 @@ const COLUMN_PATTERNS = {
   price: /^(price|list_price|asking_price|current_price|sale_price|sold_price|listing_price|sold price|listing price|orig\. list price)$/i,
   listPrice: /^(list_price|listing_price|asking_price|original_price|orig\. list price|listing price)$/i,
   salePrice: /^(sale_price|sold_price|final_price|closing_price|sold price)$/i,
-  beds: /^(beds|bedrooms|bed|br|bedroom|total bedrooms|overall bedrooms)$/i,
+  beds: /^(beds|bedrooms|bed|br|bedroom|total bedrooms|overall bedrooms|overall total bedrooms)$/i,
   baths: /^(baths|bathrooms|bath|ba|full_baths|bathroom|total baths|overall total baths)$/i,
   sqft: /^(sqft|sq_ft|square_feet|living_area|floor_area|size|sq\.ft|living_sqft|main house sqft|total sqft)$/i,
   lotSize: /^(lot_size|lot_sqft|lot_area|land_area|lot|lot size|acres)$/i,
@@ -32,17 +32,47 @@ const COLUMN_PATTERNS = {
 export function detectColumnMapping(headers: string[]): ColumnMapping {
   const mapping: ColumnMapping = {};
   
+  // First pass: exact matches for MLS-specific columns
+  const exactMatches: Record<string, string> = {
+    'Overall Total Bedrooms': 'beds',
+    'Overall Total Baths': 'baths', 
+    'Main House SqFt': 'sqft',
+    'Sold Price': 'price',
+    'Listing Price': 'listPrice',
+    'Orig. List Price': 'listPrice',
+    'Sold Date': 'saleDate',
+    'Effective Date': 'listDate',
+    'Status': 'status',
+    'Days on Market': 'daysOnMarket',
+    'Realtor.com Type': 'propertyType',
+    'Street': 'address',
+    'City': 'city',
+    'State': 'state',
+    'Zip Code': 'zipCode',
+    'Year Built': 'yearBuilt',
+    'Acres': 'lotSize'
+  };
+
+  // Apply exact matches first
+  for (const header of headers) {
+    if (exactMatches[header]) {
+      mapping[exactMatches[header] as keyof ColumnMapping] = header;
+    }
+  }
+  
+  // Second pass: pattern matching for any remaining unmapped fields
   headers.forEach(header => {
     const cleanHeader = header.trim().toLowerCase();
     
     for (const [field, pattern] of Object.entries(COLUMN_PATTERNS)) {
-      if (pattern.test(cleanHeader)) {
+      if (!mapping[field as keyof ColumnMapping] && pattern.test(cleanHeader)) {
         mapping[field as keyof ColumnMapping] = header;
         break;
       }
     }
   });
   
+  console.log('Column mapping:', mapping); // Debug log
   return mapping;
 }
 

@@ -41,10 +41,10 @@ export function calculateKPIs(properties: Property[]): KPIData {
   const activeProperties = properties.filter(p => p.status === 'Active');
   const propertiesWithDOM = properties.filter(p => p.daysOnMarket !== undefined);
 
-  // Price calculations
-  const prices = properties.map(p => p.price);
-  const salePrices = soldProperties.map(p => p.salePrice || p.price);
-  const listPrices = properties.map(p => p.listPrice || p.price);
+  // Price calculations - use actual sold prices for sold properties
+  const prices = properties.map(p => p.price).filter(p => p > 0);
+  const salePrices = soldProperties.map(p => p.price).filter(p => p > 0); // Use price field which contains sold price for sold properties
+  const listPrices = properties.map(p => p.listPrice || p.price).filter(p => p > 0);
 
   // Price per sq ft calculations
   const pricePerSqftValues = properties.map(p => p.price / p.sqft);
