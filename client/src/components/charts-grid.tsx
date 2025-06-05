@@ -76,38 +76,59 @@ export default function ChartsGrid({ data }: ChartsGridProps) {
       }, { responsive: true });
     }
 
-    // Price per Sq Ft Heatmap
+    // Price per Sq Ft Trends Over Time
     if (heatmapChartRef.current) {
-      const zipCodeData = data.reduce((acc, property) => {
-        const zip = property.zipCode || 'Unknown';
-        if (!acc[zip]) acc[zip] = [];
-        acc[zip].push(property.price / property.sqft);
+      // Filter properties with valid sale dates and group by month
+      const propertiesWithDates = data.filter(p => p.saleDate && p.status === 'C');
+      
+      const monthlyData = propertiesWithDates.reduce((acc, property) => {
+        const saleDate = new Date(property.saleDate!);
+        const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = [];
+        }
+        acc[monthKey].push(property.price / property.sqft);
         return acc;
       }, {} as Record<string, number[]>);
 
-      const zipCodes = Object.keys(zipCodeData);
-      const avgPricePerSqft = zipCodes.map(zip => {
-        const prices = zipCodeData[zip];
-        return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+      // Calculate monthly averages and sort by date
+      const sortedMonths = Object.keys(monthlyData).sort();
+      const monthlyAvgPrices = sortedMonths.map(month => {
+        const prices = monthlyData[month];
+        return Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
       });
 
-      // Create a simple heatmap representation
-      const heatmapData = zipCodes.slice(0, 10).map((zip, i) => [i, 0, avgPricePerSqft[i]]);
-
-      const heatmapTrace = {
-        z: heatmapData.map(d => [d[2]]),
-        x: zipCodes.slice(0, 10),
-        y: ['Price/SqFt'],
-        type: 'heatmap' as const,
-        colorscale: 'Blues',
-        showscale: false,
+      const trendTrace = {
+        x: sortedMonths.map(m => {
+          const [year, month] = m.split('-');
+          return `${year}-${month}`;
+        }),
+        y: monthlyAvgPrices,
+        type: 'scatter' as const,
+        mode: 'lines+markers',
+        line: {
+          color: '#2563eb',
+          width: 3
+        },
+        marker: {
+          size: 6,
+          color: '#2563eb'
+        },
+        name: 'Avg $/Sq Ft'
       };
 
-      Plotly.newPlot(heatmapChartRef.current, [heatmapTrace], {
+      Plotly.newPlot(heatmapChartRef.current, [trendTrace], {
         title: false,
-        xaxis: { title: 'ZIP Code' },
-        yaxis: { title: '' },
-        margin: { t: 20, r: 20, b: 50, l: 70 },
+        xaxis: { 
+          title: 'Month',
+          tickangle: -45
+        },
+        yaxis: { 
+          title: 'Price per Sq Ft ($)',
+          tickformat: '$,.0f'
+        },
+        margin: { t: 20, r: 20, b: 80, l: 80 },
       }, { responsive: true });
     }
 
@@ -174,10 +195,10 @@ export default function ChartsGrid({ data }: ChartsGridProps) {
         </CardContent>
       </Card>
 
-      {/* Price per Sq Ft Heatmap */}
+      {/* Price per Sq Ft Time Trends */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Price per Sq Ft by Area</CardTitle>
+          <CardTitle className="text-lg">Price per Sq Ft Over Time</CardTitle>
         </CardHeader>
         <CardContent>
           <div ref={heatmapChartRef} className="h-80" />
