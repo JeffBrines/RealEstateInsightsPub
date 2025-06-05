@@ -8,7 +8,7 @@ import KPICards from "@/components/kpi-cards";
 import ChartsGrid from "@/components/charts-grid";
 import PropertyTable from "@/components/property-table";
 import AIChat from "@/components/ai-chat";
-import PropertyDetailModal from "@/components/property-detail-modal";
+import EnhancedPropertyModal from "@/components/enhanced-property-modal";
 import MarketInsights from "@/components/market-insights";
 import ComparableAnalysis from "@/components/comparable-analysis";
 import AIValuationAnalyst from "@/components/ai-valuation-analyst";

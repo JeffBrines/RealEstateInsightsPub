@@ -108,6 +108,7 @@ export const columnMappingSchema = z.object({
   listDate: z.string().optional(),
   saleDate: z.string().optional(),
   hoaFees: z.string().optional(),
+  photoUrls: z.string().optional(),
 });
 
 export type ColumnMapping = z.infer<typeof columnMappingSchema>;

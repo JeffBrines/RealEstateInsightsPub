@@ -50,7 +50,12 @@ export function detectColumnMapping(headers: string[]): ColumnMapping {
     'State': 'state',
     'Zip Code': 'zipCode',
     'Year Built': 'yearBuilt',
-    'Acres': 'lotSize'
+    'Acres': 'lotSize',
+    'Photo Link': 'photoUrls',
+    'Photos': 'photoUrls',
+    'Photo URL': 'photoUrls',
+    'Image Link': 'photoUrls',
+    'Images': 'photoUrls'
   };
 
   // Apply exact matches first
@@ -122,6 +127,10 @@ export function transformRow(row: any, mapping: ColumnMapping): Property | null 
       return null;
     }
     
+    // Handle photo URLs - split by comma if multiple URLs
+    const photoUrlsRaw = cleanValue(row[mapping.photoUrls || ''], 'string');
+    const photoUrls = photoUrlsRaw ? photoUrlsRaw.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0) : undefined;
+
     const property: Property = {
       id: Math.random().toString(36).substr(2, 9),
       address: address.trim(),
@@ -142,6 +151,7 @@ export function transformRow(row: any, mapping: ColumnMapping): Property | null 
       listDate: cleanValue(row[mapping.listDate || ''], 'date'),
       saleDate: cleanValue(row[mapping.saleDate || ''], 'date'),
       hoaFees: cleanValue(row[mapping.hoaFees || ''], 'number'),
+      photoUrls,
     };
     
     return property;
