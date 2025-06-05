@@ -36,6 +36,17 @@ export default function PropertyTable({ data, onPropertySelect }: PropertyTableP
     if (aValue === undefined || aValue === null) return 1;
     if (bValue === undefined || bValue === null) return -1;
     
+    // Handle date fields specifically
+    if (sortField === 'saleDate' || sortField === 'listDate') {
+      const aDate = new Date(aValue as string);
+      const bDate = new Date(bValue as string);
+      
+      if (isNaN(aDate.getTime())) return 1;
+      if (isNaN(bDate.getTime())) return -1;
+      
+      return sortDirection === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
+    }
+    
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
@@ -142,6 +153,9 @@ export default function PropertyTable({ data, onPropertySelect }: PropertyTableP
                 <TableHead>
                   <SortButton field="daysOnMarket">DOM</SortButton>
                 </TableHead>
+                <TableHead>
+                  <SortButton field="saleDate">Sale Date</SortButton>
+                </TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -170,6 +184,9 @@ export default function PropertyTable({ data, onPropertySelect }: PropertyTableP
                   <TableCell>{property.sqft.toLocaleString()}</TableCell>
                   <TableCell>${Math.round(property.price / property.sqft)}</TableCell>
                   <TableCell>{property.daysOnMarket || '-'}</TableCell>
+                  <TableCell>
+                    {property.saleDate ? new Date(property.saleDate).toLocaleDateString() : '-'}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(property.status)}>
                       {property.status}
